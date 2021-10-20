@@ -8,7 +8,7 @@
 using namespace ns3;
 using namespace std;
 
-NS_LOG_COMPONENT_DEFINE("TcpCongestionAnalysis");
+NS_LOG_COMPONENT_DEFINE("TcpCongestionAnalysis2");
 
 class TcpApp : public Application
 {
