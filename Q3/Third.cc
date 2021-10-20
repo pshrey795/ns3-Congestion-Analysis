@@ -153,20 +153,27 @@ int main(int argc,char *argv[]){
     address2.SetBase("10.0.1.0","255.255.255.0");
     Ipv4InterfaceContainer interfaces2 = address2.Assign(devices2);
 
-    //Initialising node N3 as a TCP sink for link 1
+    //Initialising node N3 as a TCP sink for connection 1
     uint16_t sinkPort1 = 50000;
     Address sinkAddress1(InetSocketAddress(interfaces1.GetAddress(1), sinkPort1));
     PacketSinkHelper packetSinkHelper1("ns3::TcpSocketFactory", InetSocketAddress(interfaces1.GetAddress(1), sinkPort1));
     ApplicationContainer sinkApp1 = packetSinkHelper1.Install(nodes.Get(2));
-    sinkApp1.Start(Seconds(1.));
+    sinkApp1.Start(Seconds(0.));
     sinkApp1.Stop(Seconds(30.));
-    //Initialising node N3 as a TCP sink for link 2
+    //Initialising node N3 as a TCP sink for connection 2
     uint16_t sinkPort2 = 50001;
-    Address sinkAddress2(InetSocketAddress(interfaces2.GetAddress(1), sinkPort2));
-    PacketSinkHelper packetSinkHelper2("ns3::TcpSocketFactory", InetSocketAddress(interfaces2.GetAddress(1), sinkPort2));
+    Address sinkAddress2(InetSocketAddress(interfaces1.GetAddress(1), sinkPort2));
+    PacketSinkHelper packetSinkHelper2("ns3::TcpSocketFactory", InetSocketAddress(interfaces1.GetAddress(1), sinkPort2));
     ApplicationContainer sinkApp2 = packetSinkHelper2.Install(nodes.Get(2));
-    sinkApp2.Start(Seconds(1.));
+    sinkApp2.Start(Seconds(0.));
     sinkApp2.Stop(Seconds(30.));
+    //Initialising node N3 as a TCP sink for connection 3
+    uint16_t sinkPort3 = 50002;
+    Address sinkAddress3(InetSocketAddress(interfaces2.GetAddress(1), sinkPort3));
+    PacketSinkHelper packetSinkHelper3("ns3::TcpSocketFactory", InetSocketAddress(interfaces2.GetAddress(1), sinkPort3));
+    ApplicationContainer sinkApp3 = packetSinkHelper3.Install(nodes.Get(2));
+    sinkApp3.Start(Seconds(0.));
+    sinkApp3.Stop(Seconds(30.));
 
     //Assigning TCP types based on the given configuration of the topology
     Ptr<Socket> con1;
@@ -202,14 +209,14 @@ int main(int argc,char *argv[]){
 
     //TCP source for connection 2
     Ptr<TcpApp> app2 = CreateObject<TcpApp>();
-    app2->Setup(con2, sinkAddress1, 3000, 10000, DataRate("1.5Mbps"));
+    app2->Setup(con2, sinkAddress2, 3000, 10000, DataRate("1.5Mbps"));
     nodes.Get(0)->AddApplication(app2);
     app2->SetStartTime(Seconds(5.));
     app2->SetStopTime(Seconds(25.));
 
     //TCP source for connection 3
     Ptr<TcpApp> app3 = CreateObject<TcpApp>();
-    app3->Setup(con3, sinkAddress2, 3000, 10000, DataRate("1.5Mbps"));
+    app3->Setup(con3, sinkAddress3, 3000, 10000, DataRate("1.5Mbps"));
     nodes.Get(1)->AddApplication(app3);
     app3->SetStartTime(Seconds(15.));
     app3->SetStopTime(Seconds(30.));
@@ -222,7 +229,7 @@ int main(int argc,char *argv[]){
     con2->TraceConnectWithoutContext("CongestionWindow", MakeBoundCallback(&CwndChange, stream2));
 
     Ptr<OutputStreamWrapper> stream3 = AsciiTraceHelper.CreateFileStream("Outputs_3/"+to_string(config)+"-3.cwnd");
-    con1->TraceConnectWithoutContext("CongestionWindow", MakeBoundCallback(&CwndChange, stream3));
+    con3->TraceConnectWithoutContext("CongestionWindow", MakeBoundCallback(&CwndChange, stream3));
 
     Simulator::Stop(Seconds(30));
     Simulator::Run();
