@@ -123,10 +123,10 @@ void TcpApp::ScheduleTx(void)
 }
 
 static void
-RxDrop(Ptr<const Packet> p)
+RxDrop(Ptr<OutputStreamWrapper> stream, Ptr<const Packet> p)
 {
-  //NS_LOG_UNCOND("RxDrop at " << Simulator::Now().GetSeconds());
-  dropCount += 1;
+  *stream->GetStream() << Simulator::Now().GetSeconds() << "\t" << "Packet Dropped" << std::endl; 
+  dropCount++;
 }
 
 static void
@@ -199,18 +199,25 @@ int main(int argc, char *argv[])
   app->SetStartTime(Seconds(1.));
   app->SetStopTime(Seconds(30.));
 
+  AsciiTraceHelper asciiTraceHelper;
+  string outputFile;
+  
+  if(!analysis_type){
+	outputFile = "Outputs_1/"+tcp_type.substr(5) + ".cwnd";
+  }else{
+  	outputFile = "Outputs_1/PacketDrop_"+tcp_type.substr(5)+".txt";
+  }
+  Ptr<OutputStreamWrapper> stream = asciiTraceHelper.CreateFileStream(outputFile);
+
   // Obtaining output of congestion window sizes as a function of TCP type and time
   if (!analysis_type)
   {
-    AsciiTraceHelper asciiTraceHelper;
-    string outputFile = "Outputs_1/"+tcp_type.substr(5) + ".cwnd";
-    Ptr<OutputStreamWrapper> stream = asciiTraceHelper.CreateFileStream(outputFile);
     ns3TcpSocket->TraceConnectWithoutContext("CongestionWindow", MakeBoundCallback(&CwndChange, stream));
   }
   //Obtaining packet drop information as a function of TCP type
   else
   {
-    devices.Get(1)->TraceConnectWithoutContext("PhyRxDrop", MakeCallback(&RxDrop));
+    devices.Get(1)->TraceConnectWithoutContext("PhyRxDrop", MakeBoundCallback(&RxDrop,stream));
   }
 
   Simulator::Stop(Seconds(30));
@@ -218,7 +225,7 @@ int main(int argc, char *argv[])
   Simulator::Destroy();
 
   if(analysis_type){
-    cout << "Total packets dropped: "<<dropCount<<endl;
+    *stream->GetStream() << "Total packets dropped: "<<dropCount<<endl;
   }
 
   return 0;

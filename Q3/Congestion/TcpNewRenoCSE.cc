@@ -29,7 +29,7 @@ uint32_t TcpNewRenoCSE::SlowStart(Ptr<TcpSocketState> tcb, uint32_t segmentsAcke
         double adder = static_cast<double> (pow(tcb->m_segmentSize,1.9) / tcb->m_cWnd.Get ());
         adder = ceil(adder);
         tcb->m_cWnd += static_cast<uint32_t> (adder);
-        NS_LOG_INFO ("In slow start, updated to cwnd " << tcb->m_cWnd << " ssthresh " << tcb->m_ssThresh);
+        NS_LOG_INFO ("In SlowStart, updated to cwnd " << tcb->m_cWnd << " ssthresh " << tcb->m_ssThresh);
         return segmentsAcked - 1;
     }
     return 0;
@@ -39,7 +39,7 @@ void TcpNewRenoCSE::CongestionAvoidance (Ptr<TcpSocketState> tcb, uint32_t segme
     NS_LOG_FUNCTION (this << tcb << segmentsAcked);
     if (segmentsAcked > 0){
         tcb->m_cWnd += 0.5 * tcb->m_segmentSize;
-        NS_LOG_INFO ("In congestion avoidance, updated to cwnd " << tcb->m_cWnd <<" ssthresh " << tcb->m_ssThresh);
+        NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->m_cWnd <<" ssthresh " << tcb->m_ssThresh);
     }
 }
 
